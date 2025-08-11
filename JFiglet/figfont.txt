@@ -1,0 +1,17 @@
+        _____  ___  ____   __                _
+       |  ___||_ _|/ ___| / _|  ___   _ __  | |_  ___  _
+       | |_    | || |  _ | |_  / _ \ | '_ \ | __|/ __|(_)
+       |  _|   | || |_| ||  _|| (_) || | | || |_ \__ \ _
+       |_|    |___|\____||_|   \___/ |_| |_| \__||___/(_)
+
+       The FIGfont Version 2 FIGfont and FIGdriver Standard
+       === ======= ======= = ======= === ========= ========
+              Draft 2.0 Copyright 1996, 1997
+                  by John Cowan and Paul Burton
+              Portions Copyright 1991, 1993, 1994
+                  by Glenn Chappell and Ian Chai
+              May be freely copied and distributed.
+
+             Figlet lives at:  http://www.figlet.org/
+			 Related projects: https://github.com/lalyos/jfiglet
+

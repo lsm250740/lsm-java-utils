@@ -1,4 +1,6 @@
-include "Implementer"
+include "Implementer",
+        "JFiglet",
+		"Utils"
 
 // Environment-based TOML merging for version catalogs
 // Allows different dependency versions per environment (dev, test, prod)

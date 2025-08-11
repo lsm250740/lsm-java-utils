@@ -1,0 +1,22 @@
+/*********************************************************************************
+**                                                                              **
+**																				**
+** Builds and publish  lsm-template.jar                 						**
+**********************************************************************************/
+/**                                                                             **
+**   Template Project: no dependencies                                          **
+**********************************************************************************/   
+
+ext {
+//	appName = 'template'
+	println "ProjectName: " + project.name + 'appName: '+appName
+}
+
+
+dependencies {
+	implementation fileTree(dir: 'lib', include: '*.jar')
+	
+
+	configurations.runtime.transitive = false
+
+}
