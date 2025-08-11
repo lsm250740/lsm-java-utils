@@ -1,0 +1,69 @@
+include "Implementer"
+
+// Environment-based TOML merging for version catalogs
+// Allows different dependency versions per environment (dev, test, prod)
+def env = System.getenv("BUILD_ENV") ?: System.getProperty("BUILD_ENV") ?: "dev"
+def filesList = [file("base.toml")]  // Always include base configuration
+if (env == "dev" || env == "test") {
+    filesList << file("dev.toml")  // Override/extend with dev-specific versions
+}
+
+// Create temporary merged file for Gradle's version catalog
+def mergedFile = new File(settingsDir, "build/temp.versions.toml")
+mergedFile.parentFile.mkdirs()
+
+/**
+ * Custom TOML merger - handles section conflicts that simple concatenation can't
+ * Problem: TOML doesn't allow duplicate sections, but we need to merge [versions], [libraries], etc.
+ * Solution: Parse each file, merge sections by key, later entries override earlier ones
+ */
+def mergeAllTomlSections = { List<File> files, File outFile ->
+    def result = [:]  // Map: section_name -> Map of key-value pairs
+    String currentSection = null
+
+    files.each { f ->
+        if (!f.exists()) return  // Skip missing files
+        
+        def lines = f.readLines('UTF-8')
+        lines.each { line ->
+            def trimmed = line.trim()
+            
+            // Detect section headers like [versions], [libraries]
+            if (trimmed ==~ /\[\s*.+\s*]/) {
+                currentSection = trimmed.replaceAll(/\[|\]/, "").trim()
+                result.putIfAbsent(currentSection, [:])  // Create section if not exists
+            } 
+            // Parse key-value pairs within current section
+            else if (currentSection && trimmed && !trimmed.startsWith("#") && trimmed.contains("=")) {
+                def parts = trimmed.split("=", 2)*.trim()
+                if (parts.size() == 2 && parts[0] && parts[1]) {
+                    result[currentSection][parts[0]] = parts[1]  // Override if key exists
+                }
+            }
+        }
+    }
+
+    // Write merged result back to TOML format
+    outFile.parentFile.mkdirs()
+    outFile.withWriter("UTF-8") { writer ->
+        result.each { section, entries ->
+            writer.println("[$section]")
+            entries.each { k, v ->
+                writer.println("$k = $v")
+            }
+            writer.println()  // Empty line between sections
+        }
+    }
+}
+
+// Execute the merge
+mergeAllTomlSections(filesList, mergedFile)
+
+// Configure Gradle to use our merged version catalog
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs {
+            from(files(mergedFile.absolutePath))  // Point to merged file
+        }
+    }
+}

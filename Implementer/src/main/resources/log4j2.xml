@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Properties>
+        <Property name="log-path">c:/work/template/logs</Property>
+		<Property name="app">template</Property>
+    </Properties>
+	<Appenders>
+		<Console name="CONSOLE" target="SYSTEM_OUT">
+			<PatternLayout pattern="%d %-5p [%c] - %m%n" />
+		</Console>
+		<RollingFile name="MAIN_LOG_FILE" fileName="${log-path}/${app}.log" filePattern="${log-path}/${app}-%d{yyyy-MM-dd}-%i.log">
+			<PatternLayout>
+				<Pattern>%d %-5p [%c{1}] [%t] - %m%n</Pattern>
+			</PatternLayout>
+			<Policies>
+				<TimeBasedTriggeringPolicy />
+				<SizeBasedTriggeringPolicy size="200 MB"/>
+			</Policies>
+		</RollingFile>
+		<RollingFile name="PERSISTENCE_LOG_FILE" fileName="${log-path}/${app}_persistence.log" filePattern="${log-path}/${app}_persistence-%d{yyyy-MM-dd}-%i.log">
+		<RegexFilter regex=".*\b(mongodb|jdbs|hikari)\b.*"  onMatch="ACCEPT"     onMismatch="DENY"/>
+			<PatternLayout>
+				<Pattern>%d %-5p [%c] [%t] - %m%n</Pattern>
+			</PatternLayout>
+			<Policies>
+				<TimeBasedTriggeringPolicy />
+				<SizeBasedTriggeringPolicy size="200 MB"/>
+			</Policies>
+		</RollingFile>
+		<RollingFile name="SPRING_LOG_FILE" fileName="${log-path}/${app}_spring.log" filePattern="${log-path}/${app}_spring-%d{yyyy-MM-dd}-%i.log">
+		<RegexFilter regex=".*\b(mongodb|jdbs|data|hikari)\b.*"  onMatch="DENY"     onMismatch="ACCEPT"/>
+			<PatternLayout>
+				<Pattern>%d %-5p [%c{1}] [%t] - %m%n</Pattern>
+			</PatternLayout>
+			<Policies>
+				<TimeBasedTriggeringPolicy />
+				<SizeBasedTriggeringPolicy size="200 MB"/>
+			</Policies>
+		</RollingFile>
+		<Async name="ASYNC">
+			<AppenderRef ref="MAIN_LOG_FILE" />
+			<AppenderRef ref="CONSOLE" />
+		</Async>
+		<Async name="PERSISTENCE_ASYNC">
+			<AppenderRef ref="PERSISTENCE_LOG_FILE" />
+			<AppenderRef ref="CONSOLE" />
+		</Async>
+		<Async name="SPRING_ASYNC">
+			<AppenderRef ref="SPRING_LOG_FILE" />
+			<!-- AppenderRef ref="CONSOLE" /-->
+		</Async>
+	</Appenders>
+	<Loggers>
+	<Logger name="general" level="trace" additivity="false">
+		<AppenderRef ref="ASYNC" />
+	</Logger>
+	<Logger name="persist" level="debug" additivity="false">
+		<AppenderRef ref="PERSISTENCE_ASYNC" />
+	</Logger>
+	
+	<logger name="org.springframework.boot.SpringApplication" level="INFO" additivity="false">
+            <AppenderRef ref="ASYNC"/>
+    </logger>
+    <logger name="org.springframework" level="error" additivity="false">
+            <AppenderRef ref="SPRING_ASYNC"/>
+    </logger>
+  	<Logger name="org.springframework.data" level="error" additivity="false">
+		<AppenderRef ref="PERSISTENCE_ASYNC" />
+	</Logger>
+	
+	<Logger name="com.lsm" level="INFO" additivity="false">
+		<AppenderRef ref="ASYNC" />
+	</Logger>
+	<Root level="ERROR"> 
+ 			<AppenderRef ref="ASYNC" /> 
+ 	</Root> 
+	</Loggers>
+</Configuration>

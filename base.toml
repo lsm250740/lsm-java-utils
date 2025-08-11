@@ -1,0 +1,52 @@
+[versions]
+useJunit = "5"
+#APACHE
+apache-beanutils-version="1.9.3"
+apache-io-version="2.6"
+apache-axis-version="1.4"
+apache-lang3-version="3.5"
+apache-collections4-version="4.+"
+apache-reflections-version="0.9.+"
+apache-log4j-version="2.+"
+
+#JUNIT
+junit4 = "4.12"
+junit5 = "5.10.1"
+
+
+[libraries]
+#APACHE
+apache-beanutils= { module = "commons-beanutils:commons-beanutils", version.ref = "apache-beanutils-version" }
+apache-io={ module = "commons-io:commons-io", version.ref = "apache-io-version" }
+apache-lang3={ module = "org.apache.commons:commons-lang3", version.ref = "apache-lang3-version" }
+apache-collections4={ module = "org.apache.commons:commons-collections4", version.ref = "apache-collections4-version" }
+apache-reflections={ module = "org.reflections:reflections", version.ref = "apache-reflections-version" }
+apache-log4j-core={ module = "org.apache.logging.log4j:log4j-core", version.ref = "apache-log4j-version" }
+apache-log4j-api={ module = "org.apache.logging.log4j:log4j-api", version.ref = "apache-log4j-version" }
+# log4j-slf4j-impl depends on 'org.slf4j:slf4j-api:2.0.13' and also loads apache-log4j-api
+apache-log4j-slf4j={ module = "org.apache.logging.log4j:log4j-slf4j-impl", version.ref = "apache-log4j-version" }
+
+
+#JUNIT
+junit4-core = { module = "junit:junit", version.ref = "junit4" }
+junit5-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit5" }
+junit5-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit5" }
+junit5-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit5" }
+
+ 
+[bundles]
+#BASE
+log4j=["apache-log4j-core","apache-log4j-slf4j","apache-log4j-api"]
+apache-utils=["apache-beanutils","apache-io","apache-lang3","apache-collections4","apache-reflections"]
+
+#JUNIT
+junit4 = ["junit4-core"]
+junit5 = ["junit5-api", "junit5-params"]
+junit5-RuntimeOnly = ["junit5-engine"]
+
+[plugins]
+java = { id = "java" }
+eclipse = { id = "eclipse" }
+groovy = { id = "groovy" }
+java-library = { id = "java-library" }
+maven-publish = { id = "maven-publish" }

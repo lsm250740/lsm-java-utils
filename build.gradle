@@ -1,0 +1,358 @@
+/*********************************************************************************
+ **                                                                              **
+ ** 						,__ __                    							 **
+ **					    	/|  |  |        o          							 **
+ ** 						 |  |  |   __,      _  _   							 **
+ ** 						 |  |  |  /  |  |  / |/ |  							 **
+ ** 						 |  |  |_/\_/|_/|_/  |  |_/							 **                            
+ **																				 **
+ ** Builds and publish jars                            							 **
+ **********************************************************************************/
+/**                                                                              **
+ **  My Template Project                                                         ** 
+ **********************************************************************************/   
+import java.text.SimpleDateFormat;
+
+
+def buildTime() {
+	def df = new SimpleDateFormat("yyyy-MMMMM-dd HH:mm:ss")
+	return df.format(new Date())
+}
+def nameConvert(string) {
+	string = string.replaceAll('(?<!^)([a-z])([A-Z])', '$1-$2').toLowerCase();
+	println 'converted: ' + string;
+	return string;
+}
+
+
+/******************************************************************************************
+ *  TOML libs definitons utilities
+ *  - getTomlCatalog - returns Toml catalog  VersionCatalogsExtension (@see settings.gradle)
+ *  - getTomlLibVersion - returns value of the lib defined in TOML section  named [version]
+ * -  tomlDependecies - adds dependecies to DependencyHandler 
+ *                          it should be sent to the method - variable name is delegate
+ *  -  tomlDependecies - calls   tomlDependecies with parameter isTest = true                   
+ *  - catalog - collection of TOML defined configuration
+ *  - tomlFindLibs - find all libs aliases in TOML catalog starting with a prefix
+ *  - tomlFindLibsBundles - find all bundles aliases in TOML catalog starting with a prefix
+ *******************************************************************************************/
+
+def getTomlCatalog() {
+	if (!project.hasProperty('catalog')) {
+		if (project.extensions.findByType(VersionCatalogsExtension)) {
+			project.ext.catalog = project.extensions.getByType(VersionCatalogsExtension).named("libs")
+		} else {
+			throw new GradleException("VersionCatalogsExtension not found — make sure it's available and you inthe proper section ")
+		}
+	}
+	return project.ext.catalog
+}
+
+def getTomlLibVersion(String lib, defaultValue=null) {
+	def libs = getTomlCatalog()
+    return libs.findVersion(lib).map {it.requiredVersion }.orElse(defaultValue)
+}
+
+def tomlFindLib(String prefix) {
+	def catalog = getTomlCatalog()
+	def result = [:] // Map<String, Object>
+	catalog.libraryAliases.each { alias ->
+		if (alias.startsWith(prefix)) {
+			result[alias]=catalog.findLibrary(alias).get()
+		}
+	}
+	return result
+}
+
+// Find all bundle aliases starting with a prefix
+def tomlFindLibsBundles(String prefix,bundlesOnly=false) {
+	def catalog = getTomlCatalog()
+	def result = [:] // Map<String, Object>
+	catalog.bundleAliases.each { alias ->
+		if (alias.startsWith(prefix)) {
+			result[alias]=catalog.findBundle(alias).get()
+		}
+	}
+
+	// Check if result is empty
+	if (result.isEmpty()) {
+		println "Warning: No bundles found with prefix '$prefix'"
+		if (!bundlesOnly) {
+			result = tomlFindLib(prefix)
+		}
+	}
+
+	return result
+}
+
+/******************************************************************************************
+ *  TOML libs definitons utilities
+ * -  tomlDependecies - adds TEst dependecies to DependencyHandler
+ *                          it should be sent to the method - variable name is delegate
+ *  -  tomlDependecies - calls   tomlDependecies with parameter isTest = true
+ *******************************************************************************************/
+
+def tomlAddTestDependencies(source,String prefix) {
+	tomlTestDependecies(source,prefix,true)
+}
+
+/******************************************************************************************
+ *  TOML libs definitons utilities
+ * -  tomlDependecies - adds dependecies to DependencyHandler
+ *                          it should be sent to the method - variable name is delegate
+ *  -  tomlDependecies - calls   tomlDependecies with parameter isTest = true
+ *******************************************************************************************/
+
+def tomlTestDependecies(source , String inLibName, boolean isTest = false) {
+	tomlFindLibsBundles(inLibName).each { libName, depProvider ->
+
+		def config =libName.endsWith('RuntimeOnly') ? 'runtimeOnly' :
+				libName.endsWith('compileOnly') ? 'compileOnly' :
+				'implementation'
+		config = config = isTest ? "test${config.capitalize()}" : config
+		println "[DEBUG] Adding $libName as $config"
+
+		def deps = depProvider.get()
+		if (deps instanceof Collection) {
+			deps.each { singleDep ->
+				source.add(config, singleDep)
+			}
+		} else {
+			source.add(config, deps)
+		}
+	}
+}
+
+
+
+/************************************************************************************
+ * 
+ * All Projects Configuratio 
+ * 
+ ***********************************************************************************/	
+allprojects {
+
+	apply plugin: 'java'
+	apply plugin: 'eclipse'
+	apply plugin: 'groovy'
+	//	apply plugin: 'maven'
+	apply plugin: 'java-library'
+	apply plugin: 'maven-publish'
+	
+		repositories {
+		mavenCentral()
+		//	maven  {
+		//	   	url artifactory_url
+		//	   	credentials {
+		//	   		username artifactory_username
+		// 	  		password artifactory_password
+		//	  	}
+		// 	}
+
+		flatDir { dirs 'lib' }
+	}
+
+
+
+	ext {
+
+		println 'user dir' + project.properties['user.dir']
+		outputBuild = '/_export/Repository'
+		if(!project.properties['user.dir'] ) {
+			println  "user.dir is undefined, use default" + new File(outputBuild).getAbsolutePath()
+			outputBuild = new File(outputBuild).getAbsolutePath()
+		} else {
+			println  "user.dir ="+ project.properties['user.dir']
+			outputBuild = project.properties['user.dir'] + outputBuild
+		}
+
+		appName = nameConvert( project.name)
+		publisher = [groupId: 'lsm.template', artifactId:appName]
+		buildVersion = '1.0.0'
+		gitVersionHash = ''
+		versionHash = project.findProperty('versionHash')  ?: 'undefined'
+	}
+
+	configurations {
+		provided
+		runtime
+		antProvided
+	}
+
+	sourceSets {
+		main {
+			resources {
+				exclude '**/test/*'
+				exclude 'certs/test'
+			}
+		}
+	}
+	/*************************************************************************
+	 *  JAVA version from Gradle 8+
+	 ***************************************************************************/
+	java {
+		toolchain {
+			languageVersion = JavaLanguageVersion.of(21)
+		}
+	}
+
+
+	tasks.withType(Test).configureEach {
+		include '**/*.xml'
+		include '**/*JUnit.class'
+
+				
+		//include { FileTreeElement elem -> ((elem.path.contains('/test/') && elem.path.contains('TestCheck') ))}
+		switch (getTomlLibVersion("useJunit","4")) {
+			case "4":   
+			   useJUnit()
+			   println 'JUnit4 version is used'
+			   break
+			case "5":
+			   useJUnitPlatform()
+			   println 'JUnit5 version is used'
+			   break
+			default: 
+			   println 'Junit version is undefined '
+		}
+		
+	}
+
+	dependencies {
+
+		implementation fileTree(dir: 'lib', include: '*.jar')
+	    tomlAddTestDependencies(delegate  ,"junit${getTomlLibVersion('useJunit','4')}")
+		testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.1'
+		implementation libs.bundles.log4j
+		implementation libs.bundles.apache.utils
+	    configurations.runtimeClasspath.transitive = false
+	}
+	
+	eclipse {
+		jdt {
+			javaRuntimeName = "jdk-21"
+			classpath {
+				//For Running JUNIT5  when use Junit 4 - not required but it same with version /4
+			//	containers 'org.eclipse.jdt.junit.JUNIT_CONTAINER/${getTomlLibVersion("useJunit","4"}'
+			//	containers 'org.eclipse.jdt.junit.JUNIT_CONTAINER/5'
+			}
+		}
+	}
+
+	task buildWithVersion() {
+		println 'buildWithVersion ' + version + ''
+		buildVersion = version
+	}
+	buildWithVersion.finalizedBy build
+}
+
+gradle.taskGraph.whenReady { graph ->
+	def badTasks = [
+		'findMainClass',
+		'startScripts',
+		'distTar',
+		'distZip'
+	]
+	graph.allTasks.findAll {it.name in badTasks}.each { task ->
+		task.enabled = false
+	}
+}
+
+subprojects{
+	
+	afterEvaluate {
+		//tomlAddTestDependencies('junit5')
+		  if (project.configurations.findByName('testImplementation')) {
+                println "[MAIN] After adding - testImplementation has ${project.configurations.testImplementation.dependencies.size()} dependencies"
+		  }    
+		  if (project.configurations.findByName('testRuntimeOnly')) {
+			  println "[MAIN] After adding - testRuntimeOnly has ${project.configurations.testRuntimeOnly.dependencies.size()} dependencies"
+		}
+	}
+
+	task copyToLib(type: Copy) {
+		println 'copytoLib: '+outputBuild+"/"+project.name+"/lib"
+		//		delete outputBuild+"/"+project.name+"/lib"
+		from configurations.runtimeClasspath
+		into outputBuild+"/"+project.name+"/lib"
+		setDuplicatesStrategy(DuplicatesStrategy.INCLUDE)
+	}
+
+	task copyConfig(type: Copy) {
+		into "$outputBuild/$project"
+		from('src/main/resources') {
+			include 'general.properties'
+			include 'log*.xml'
+			//filter(ReplaceTokens, tokens: [version: '2.3.1'])
+		}
+		includeEmptyDirs = false
+	}
+
+	task sourceJar(type: Jar) {
+		archiveClassifier.set('sources')
+		from sourceSets.main.allJava
+	}
+
+	jar () {
+		appName = nameConvert( project.name)
+		println 'jar. appName='+appName + ', versionHash='+versionHash
+		archiveBaseName.set(appName)
+		archiveFileName.set(appName + ".jar")
+		destinationDirectory.set(file(outputBuild+'/'+appName))
+		includeEmptyDirs = false
+		exclude 'general.properties/'
+		exclude 'Log*.*/'
+		exclude 'log*.*/'
+		exclude '/*.dtd/'
+		exclude 'config/**.xml'
+		exclude 'db-scripts/**.ddl'
+		doFirst{
+			manifest {
+				attributes("Manifest-Version": "1.0",
+				"Created-By"             : "Migdal",
+				"Implementation-Title"   : project.name,
+				"Implementation-Version" : buildVersion,
+				"GitVersionHash" 		 : versionHash,
+				"Implementation-Date"    : "${buildTime()}",
+				"Class-Path"             : ". "+configurations.runtimeClasspath.files.collect {"lib/" + "$it.name" }.join(' ')
+				)
+			}
+		}
+	}
+
+	publishing {
+		publications {
+			myLibrary(MavenPublication) {
+				from components.java
+			}
+			maven(MavenPublication) {
+				groupId='ent.migdal.utils'
+				artifactId = publisher.artifactId
+				version = '1.0'  // just define field. The velue will be set from publishWithVersion
+				from components.java
+				artifact tasks.sourceJar
+			}
+		}
+
+		repositories {
+			println 'local_repo='+ local_repo
+			maven {
+				url local_repo
+				credentials {
+					username artifactory_username
+					password artifactory_password
+				}
+			}
+		}
+	}
+
+	task publishWithVersion() {
+		println 'publishWithVersion ' + version + ' app ' + appName + ' versionHash = ' + versionHash
+		println 'publishing.publisher='+publisher
+		println 'groupId='+publisher.groupId+', artifactId='+publisher.artifactId
+		publishing.publications.maven.version = version
+		publishing.publications.maven.groupId = publisher.groupId
+		publishing.publications.maven.artifactId = publisher.artifactId
+	}
+	publishWithVersion.finalizedBy publish
+}
