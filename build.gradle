@@ -173,6 +173,20 @@ def applyConfigFromToml(obj, configMap, prefix) {
 }
 
 /************************************************************************************
+ * Flatten all properties of type array starting with prefix to one array
+ *
+ ***********************************************************************************/
+def findConfigOfArrayType( props, prefix) {
+	return props.stringPropertyNames()
+	.findAll { it.startsWith(prefix) }
+	.collect { key ->
+		def raw = props.getProperty(key)
+		raw.replaceAll("\\[|\\]", "").split(',').collect { it.trim() }
+	}
+	.flatten()
+}
+
+/************************************************************************************
  *
  * Set nested property value from  proeprties file
  * where root path is config prefix
@@ -194,6 +208,7 @@ def applyConfigFromProperties(obj, props, prefix) {
 	         setNestedProperty(obj, shortKey, val)
 		 }
 }
+
 /************************************************************************************
  * 
  * All Projects Configuratio 
@@ -279,8 +294,21 @@ allprojects {
 	tasks.withType(Test).configureEach {
 		include '**/*.xml'
 		include '**/*JUnit.class'
+		include '**/*Test.class'
 
+		testLogging {
+			events "passed", "skipped", "failed"
+			exceptionFormat "full"
+			showCauses true
+			showExceptions true
+			showStackTraces true
+		}
 		
+		afterTest { descriptor, result ->
+			if (result.resultType == org.gradle.api.tasks.testing.TestResult.ResultType.FAILURE) {
+				println "FAILED: ${descriptor.className} > ${descriptor.name} :: ${result.exception?.message}"
+			}
+		}
 				
 		//include { FileTreeElement elem -> ((elem.path.contains('/test/') && elem.path.contains('TestCheck') ))}
 		switch (getTomlLibVersion("useJunit","4")) {
@@ -307,9 +335,26 @@ allprojects {
 		}
 	}
 
-		
+/**
+ * All JaCoCo configuration properties are defined in build.properties file
+ *  jacocoConfig.include - include patterns for JaCoCo verification
+ *  jacocoConfig.exclude - exclude patterns for JaCoCo verification
+ *  jacocoConfig.violationRules.rule - rule for JaCoCo verification
+ */
 	jacocoTestCoverageVerification {
 		dependsOn test
+		
+		def includePatterns = findConfigOfArrayType(customProps, "jacocoConfig.include")
+		def excludePatterns = findConfigOfArrayType(customProps, "jacocoConfig.exclude")
+		if (!excludePatterns.isEmpty() || !includePatterns.isEmpty()) {
+			task.classDirectories.setFrom(
+				files(task.classDirectories.files.collect { fileTree(dir: it) {
+					includePatterns.each { pattern -> exclude pattern }
+					excludePatterns.each { pattern -> exclude pattern }
+				}})
+			)
+		}
+
 		violationRules {
 			rule {
 				applyConfigFromProperties(delegate,customProps, "jacocoConfig.violationRules.rule")
@@ -318,7 +363,7 @@ allprojects {
 	}
 	
 	// Set failure on Jacoco verification
-	// check.dependsOn jacocoTestCoverageVerification
+	 check.dependsOn jacocoTestCoverageVerification
 	
 	dependencies {
 

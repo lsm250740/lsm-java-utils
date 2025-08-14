@@ -16,7 +16,7 @@ public class FigletFontTest {
 
   @Test
   public void testConstruct() throws Exception {
-    FigletFont ff = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("standard.flf"));
+    FigletFont ff = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("fonts/standard.flf"));
     assertEquals("Standard", ff.fontName);
     assertEquals('$', ff.hardblank);
     assertEquals(6, ff.height);
@@ -97,7 +97,7 @@ public class FigletFontTest {
 
   @Test
   public void testGetFont() throws Exception {
-    FigletFont ff = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("standard.flf"));
+    FigletFont ff = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("fonts/standard.flf"));
     assertEquals(' ', ff.getFont()[32][0][0]);
     assertEquals('$', ff.getFont()[32][0][1]);
     assertEquals(' ', ff.getFont()[32][1][0]);
@@ -114,7 +114,7 @@ public class FigletFontTest {
 
   @Test
   public void testGetChar() throws Exception {
-    FigletFont ff = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("standard.flf"));
+    FigletFont ff = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("fonts/standard.flf"));
     assertEquals(' ', ff.getChar(32)[0][0]);
     assertEquals('$', ff.getChar(32)[0][1]);
     assertEquals(' ', ff.getChar(32)[1][0]);
@@ -131,7 +131,7 @@ public class FigletFontTest {
 
   @Test
   public void testGetCharLineString() throws Exception {
-    FigletFont ff = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("standard.flf"));
+    FigletFont ff = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("fonts/standard.flf"));
     assertEquals("  ", ff.getCharLineString(32, 0));
     assertEquals("  ", ff.getCharLineString(32, 1));
     assertEquals("  ", ff.getCharLineString(32, 2));
@@ -153,7 +153,7 @@ public class FigletFontTest {
 
   @Test
   public void testConvert() throws Exception {
-    String asciiArt = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("standard.flf")).convert("jfiglet");
+    String asciiArt = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("fonts/standard.flf")).convert("jfiglet");
     assertEqualsJFiglet(asciiArt);
   }
 
@@ -165,26 +165,26 @@ public class FigletFontTest {
 
   @Test
   public void testConvertOneLineInputStream() throws Exception {
-    String asciiArt = FigletFont.convertOneLine(FigletFontTest.class.getClassLoader().getResourceAsStream("standard.flf"), "jfiglet");
+    String asciiArt = FigletFont.convertOneLine(FigletFontTest.class.getClassLoader().getResourceAsStream("fonts/standard.flf"), "jfiglet");
     assertEqualsJFiglet(asciiArt);
   }
 
   @Test
   public void testConvertOneLineFontPathClasspath() throws Exception {
-    String asciiArt = FigletFont.convertOneLine("classpath:/standard.flf", "jfiglet");
+    String asciiArt = FigletFont.convertOneLine("classpath:/fonts/standard.flf", "jfiglet");
     assertEqualsJFiglet(asciiArt);
   }
 
   @Test
   public void testConvertOneLineFontPathFile() throws Exception {
-    File file = new File(FigletFontTest.class.getClassLoader().getResource("standard.flf").getFile());
+    File file = new File(FigletFontTest.class.getClassLoader().getResource("fonts/standard.flf").getFile());
     String asciiArt = FigletFont.convertOneLine(file.getAbsolutePath(), "jfiglet");
     assertEqualsJFiglet(asciiArt);
   }
 
   @Test
   public void testConvertOneLineFile() throws Exception {
-    File file = new File(FigletFontTest.class.getClassLoader().getResource("standard.flf").getFile());
+    File file = new File(FigletFontTest.class.getClassLoader().getResource("fonts/standard.flf").getFile());
     String asciiArt = FigletFont.convertOneLine(file, "jfiglet");
     assertEqualsJFiglet(asciiArt);
   }
@@ -203,7 +203,7 @@ public class FigletFontTest {
 
   @Test
   public void testConvertOneLineSmushing() throws Exception {
-    String asciiArt = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("standard.flf"))
+    String asciiArt = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("fonts/standard.flf"))
         .withSmushingRulesToApply(new SmushingRulesToApply(
             SmushingRule.Layout.SMUSHING,
             SmushingRule.Layout.FULL_WIDTH,
@@ -215,7 +215,7 @@ public class FigletFontTest {
 
   @Test
   public void testConvertOneLineFitting() throws Exception {
-    String asciiArt = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("standard.flf"))
+    String asciiArt = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("fonts/standard.flf"))
         .withSmushingRulesToApply(new SmushingRulesToApply(
             SmushingRule.Layout.FITTING,
             SmushingRule.Layout.FULL_WIDTH,
@@ -227,7 +227,7 @@ public class FigletFontTest {
 
   @Test
   public void testConvertOneLineFullWidth() throws Exception {
-    String asciiArt = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("standard.flf"))
+    String asciiArt = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("fonts/standard.flf"))
         .withSmushingRulesToApply(new SmushingRulesToApply(
             SmushingRule.Layout.FULL_WIDTH,
             SmushingRule.Layout.FULL_WIDTH,
@@ -239,7 +239,7 @@ public class FigletFontTest {
 
   @Test
   public void testConvertFontSlant() throws Exception {
-    String asciiArt = FigletFont.convertOneLine(FigletFontTest.class.getClassLoader().getResourceAsStream("slant.flf"), "jfiglet");
+    String asciiArt = FigletFont.convertOneLine(FigletFontTest.class.getClassLoader().getResourceAsStream("fonts/slant.flf"), "jfiglet");
     assertEquals("       _ _____       __     __ " + LINE_ENDING +
             "      (_) __(_)___ _/ /__  / /_" + LINE_ENDING +
             "     / / /_/ / __ `/ / _ \\/ __/" + LINE_ENDING +
@@ -251,7 +251,7 @@ public class FigletFontTest {
 
   @Test
   public void testConvertCharCode() throws  Exception {
-    FigletFont ff = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("standard.flf"));
+    FigletFont ff = new FigletFont(FigletFontTest.class.getClassLoader().getResourceAsStream("fonts/standard.flf"));
     assertEquals(255, ff.convertCharCode("255  LATIN SMALL LETTER Y WITH DIAERESIS"));
     assertEquals(256, ff.convertCharCode("0x0100  LATIN CAPITAL LETTER A WITH MACRON"));
     assertEquals(63, ff.convertCharCode("077 QUESTION MARK (OCTAL)"));

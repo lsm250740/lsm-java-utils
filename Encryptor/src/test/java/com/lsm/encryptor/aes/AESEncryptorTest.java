@@ -1,38 +1,46 @@
 package com.lsm.encryptor.aes;
 
-
 import org.junit.jupiter.api.Test;
-
+import static org.junit.jupiter.api.Assertions.*;
 import com.lsm.encryptor.CryptoException;
 
-public class AESEncryptorTest{
+public class AESEncryptorTest {
 
 	@Test
-	public void encrypt(){
+	public void testEncryptDecrypt() throws CryptoException {
 		String test = "LIFE_POLICA:123456789123:123456789";
-	
-		try{
-		//	AESEncryptorUtil.aes256.rebuild("migdal-");
-		  String encrypted = AESEncryptorUtil.aes256.encrypt(test);
-			System.out.println(" encrypt:"+encrypted);
-			System.out.println(" decrypt:"+ AESEncryptorUtil.aes256.decrypt(encrypted));
-		  }catch(CryptoException e){
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		  }
+		
+		String encrypted = AESEncryptorUtil.aes256.encrypt(test);
+		assertNotNull(encrypted);
+		assertNotEquals(test, encrypted);
+		
+		String decrypted = AESEncryptorUtil.aes256.decrypt(encrypted);
+		assertEquals(test, decrypted);
 	}
 
 	@Test
-	public void decrypt(){
-		String test = "-7122fe4f0977101d7cd86df41ceeb975e146d3c587f7913dc3282798654514b17d00c85851a289e";
+	public void testDecryptWithRebuild() throws CryptoException {
+		String test = "Test message for round trip";;
+		final String originalEncrypted = AESEncryptorUtil.aes256.encrypt(test);
+		
+		AESEncryptorUtil.aes256.rebuild("mynew");
+		assertThrows(CryptoException.class, () -> {
+			   AESEncryptorUtil.aes256.decrypt(originalEncrypted);
+	        });
+		
+		final String encrypted = AESEncryptorUtil.aes256.encrypt(test);
+		String decrypted = AESEncryptorUtil.aes256.decrypt(encrypted);
+		assertNotNull(decrypted);
+		assertFalse(decrypted.isEmpty());
+	}
 	
-		try{
-			AESEncryptorUtil.aes256.rebuild("migdal");
-			String decrypted = AESEncryptorUtil.aes256.decrypt(test);
-			System.out.println("encrypt:" +decrypted);
-		}catch(CryptoException e){
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	@Test
+	public void testRoundTripEncryption() throws CryptoException {
+		String original = "Test message for round trip";
+		
+		String encrypted = AESEncryptorUtil.aes256.encrypt(original);
+		String decrypted = AESEncryptorUtil.aes256.decrypt(encrypted);
+		
+		assertEquals(original, decrypted);
 	}
 }
