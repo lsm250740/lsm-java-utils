@@ -70,7 +70,10 @@ class SmushingRulesToApply {
   }
 
   class ImproperUseException extends RuntimeException {
-    ImproperUseException(String message){
+
+	private static final long serialVersionUID = 1315505843412028156L;
+
+	ImproperUseException(String message){
       super(message);
     }
   }

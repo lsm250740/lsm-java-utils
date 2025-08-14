@@ -2,11 +2,8 @@ package com.lsm.jfiglet;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
-
-import com.lsm.jfiglet.SmushingRule.*;
 
 public class SmushingTest {
 

@@ -1,4 +1,5 @@
 [versions]
+encoding = "UTF-8"
 useJunit = "5"
 #APACHE
 apache-beanutils-version="1.9.3"

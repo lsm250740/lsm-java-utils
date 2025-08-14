@@ -102,7 +102,6 @@ class Smushing {
    * @param char2 Char to be added
    * @return Maximum overlay across all lines
    */
-  @SuppressWarnings("StatementWithEmptyBody")
   private static int calculateOverlay(FigletFont figletFont, char[][] char1, char[][] char2){
     if (figletFont.smushingRulesToApply.getHorizontalLayout() == SmushingRule.Layout.FULL_WIDTH){
       return 0;

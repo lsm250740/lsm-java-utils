@@ -211,17 +211,20 @@ public class FigletFont {
   }
 
   public static String convertOneLine(String fontPath, String message) throws IOException {
-    InputStream fontStream = null;
-    if (fontPath.startsWith("classpath:")) {
-      fontStream = FigletFont.class.getResourceAsStream(fontPath.substring(10));
-    } else if (fontPath.startsWith("http://") || fontPath.startsWith("https://")) {
-      fontStream = new URL(fontPath).openStream();
-    } else {
-      fontStream = new FileInputStream(fontPath);
-    }
-    return convertOneLine(fontStream, message);
+		try (InputStream fontStream = openStream(fontPath, message);) {
+			return convertOneLine(fontStream, message);
+		}
   }
 
+  private final  static InputStream openStream(String fontPath, String message) throws IOException {
+	    if (fontPath.startsWith("classpath:")) {
+	      return FigletFont.class.getResourceAsStream(fontPath.substring(10));
+	    } else if (fontPath.startsWith("http://") || fontPath.startsWith("https://")) {
+	      return  URI.create(fontPath).toURL().openStream();
+	    }	   
+	    return new FileInputStream(fontPath);
+   }
+  
   FigletFont withSmushingRulesToApply(SmushingRulesToApply smushingRulesToApply){
     this.smushingRulesToApply = smushingRulesToApply;
     return this;

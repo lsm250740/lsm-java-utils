@@ -184,12 +184,14 @@ def applyConfigFromProperties(obj, props, prefix) {
 	props.stringPropertyNames()
 		 .findAll { it.startsWith(prefix + ".") }
 		 .each { fullKey ->
+			 println  "[Debug]: applyConfigFromProperties fullKey=$fullKey "
 			 def shortKey = fullKey.substring(prefix.length() + 1)
 			 def rawVal = props.getProperty(fullKey)
 			 def val = rawVal.isInteger() ? rawVal.toInteger() :
 					   rawVal.isBigDecimal() ? rawVal.toBigDecimal() :
 					   rawVal.equalsIgnoreCase("true") || rawVal.equalsIgnoreCase("false") ? rawVal.toBoolean() :
 					   rawVal
+	         setNestedProperty(obj, shortKey, val)
 		 }
 }
 /************************************************************************************
@@ -266,7 +268,14 @@ allprojects {
 		}
 	}
 
-
+	tasks.withType(JavaCompile) {
+		options.encoding = libs.versions.encoding.get()
+	}
+	
+	tasks.withType(ProcessResources) {
+		filteringCharset = libs.versions.encoding.get()
+	}
+	
 	tasks.withType(Test).configureEach {
 		include '**/*.xml'
 		include '**/*JUnit.class'
@@ -300,12 +309,16 @@ allprojects {
 
 		
 	jacocoTestCoverageVerification {
+		dependsOn test
 		violationRules {
 			rule {
-				applyConfigFromProperties(delegate,customProps, "jacocoConfig.violationRules")
+				applyConfigFromProperties(delegate,customProps, "jacocoConfig.violationRules.rule")
 			}
 		}
 	}
+	
+	// Set failure on Jacoco verification
+	// check.dependsOn jacocoTestCoverageVerification
 	
 	dependencies {
 
@@ -321,7 +334,7 @@ allprojects {
 		jdt {
 			javaRuntimeName = "jdk-21"
 			classpath {
-				//For Running JUNIT5  when use Junit 4 - not required but it same with version /4
+			//For Running JUNIT5  when use Junit 4 - not required but it same with version /4
 			//	containers 'org.eclipse.jdt.junit.JUNIT_CONTAINER/${getTomlLibVersion("useJunit","4"}'
 			//	containers 'org.eclipse.jdt.junit.JUNIT_CONTAINER/5'
 			}
