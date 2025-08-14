@@ -1,7 +1,8 @@
-include "Implementer",
-        "JFiglet",
+include "JFiglet",
+		"Encryptor",
 		"Utils"
-
+		
+// 
 // Environment-based TOML merging for version catalogs
 // Allows different dependency versions per environment (dev, test, prod)
 def env = System.getenv("BUILD_ENV") ?: System.getProperty("BUILD_ENV") ?: "dev"

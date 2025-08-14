@@ -24,6 +24,13 @@ def nameConvert(string) {
 	return string;
 }
 
+/******************************************************************************************
+ *  Build Configuration file
+ *    build.properties  
+ *******************************************************************************************/
+
+def customProps = new Properties()
+file("build.properties").withInputStream { customProps.load(it) }
 
 /******************************************************************************************
  *  TOML libs definitons utilities
@@ -126,6 +133,66 @@ def tomlTestDependecies(source , String inLibName, boolean isTest = false) {
 
 
 /************************************************************************************
+ *
+ * Set nested property value
+ * For example: path rule.validation.delay = 300
+ * sets value rule{validation {delay=300}}
+ *
+ ***********************************************************************************/
+def setNestedProperty(obj, path, value) {
+	def parts = path.split(/\./)
+	def target = obj
+	parts[0..-2].each { p ->
+		// Для контейнеров типа violationRules { rule { ... } }
+		if (target.metaClass.respondsTo(target, p)) {
+			target = target."$p" {}
+		} else {
+			target = target."$p"
+		}
+	}
+	target."${parts[-1]}" = value
+}
+
+/************************************************************************************
+ *
+ * Set nested property value from  TOML
+ * where root path is config prefix
+ * for excample jacoco-configuration.rule.validation.delay = 300
+ * removes jacoco from the path
+ * 
+ * Note: Standard TOML does not support free formated sections. The non standard TOML file should be created and loaded
+ *     import com.moandjiezana.toml.Toml
+ *     def jacocoConfig = new Toml().read(file("gradle/jacoco-config.toml"))
+ ***********************************************************************************/
+def applyConfigFromToml(obj, configMap, prefix) {
+	configMap.getKeys().findAll { it.startsWith(prefix) }.each { fullKey ->
+		def shortKey = fullKey.substring(prefix.length() + 1) // убираем префикс и точку
+		def val = configMap.get(fullKey)
+		setNestedProperty(obj, shortKey, val instanceof String && val.isNumber() ? val.toBigDecimal() : val)
+	}
+}
+
+/************************************************************************************
+ *
+ * Set nested property value from  proeprties file
+ * where root path is config prefix
+ * for excample jacoco-configuration.rule.validation.delay = 300
+ * removes jacoco from the path
+ *
+ ***********************************************************************************/
+def applyConfigFromProperties(obj, props, prefix) {
+	props.stringPropertyNames()
+		 .findAll { it.startsWith(prefix + ".") }
+		 .each { fullKey ->
+			 def shortKey = fullKey.substring(prefix.length() + 1)
+			 def rawVal = props.getProperty(fullKey)
+			 def val = rawVal.isInteger() ? rawVal.toInteger() :
+					   rawVal.isBigDecimal() ? rawVal.toBigDecimal() :
+					   rawVal.equalsIgnoreCase("true") || rawVal.equalsIgnoreCase("false") ? rawVal.toBoolean() :
+					   rawVal
+		 }
+}
+/************************************************************************************
  * 
  * All Projects Configuratio 
  * 
@@ -138,8 +205,9 @@ allprojects {
 	//	apply plugin: 'maven'
 	apply plugin: 'java-library'
 	apply plugin: 'maven-publish'
+	apply plugin: 'jacoco'
 	
-		repositories {
+	repositories {
 		mavenCentral()
 		//	maven  {
 		//	   	url artifactory_url
@@ -152,7 +220,9 @@ allprojects {
 		flatDir { dirs 'lib' }
 	}
 
-
+	jacoco {
+		toolVersion = libs.versions.jacoco.get()
+	}
 
 	ext {
 
@@ -201,6 +271,7 @@ allprojects {
 		include '**/*.xml'
 		include '**/*JUnit.class'
 
+		
 				
 		//include { FileTreeElement elem -> ((elem.path.contains('/test/') && elem.path.contains('TestCheck') ))}
 		switch (getTomlLibVersion("useJunit","4")) {
@@ -213,11 +284,29 @@ allprojects {
 			   println 'JUnit5 version is used'
 			   break
 			default: 
-			   println 'Junit version is undefined '
+			   println 'Junit version is undefined'
 		}
 		
+		finalizedBy jacocoTestReport
 	}
 
+	jacocoTestReport {
+		dependsOn tasks.withType(Test)
+		reports {
+			// libs.metadata.jacocoConfig — секция TOML
+			applyConfigFromProperties(reports, customProps,"jacocoConfig.reports")
+		}
+	}
+
+		
+	jacocoTestCoverageVerification {
+		violationRules {
+			rule {
+				applyConfigFromProperties(delegate,customProps, "jacocoConfig.violationRules")
+			}
+		}
+	}
+	
 	dependencies {
 
 		implementation fileTree(dir: 'lib', include: '*.jar')
@@ -246,6 +335,44 @@ allprojects {
 	buildWithVersion.finalizedBy build
 }
 
+/**
+ *  Jacoco report for all subprojects
+ */
+tasks.register("jacocoRootReport", JacocoReport) {
+	group = "verification"
+    description = "Merged JaCoCo report for all subprojects"
+    doLast {
+        reports.all { report ->
+            def file = report.outputLocation.get().asFile
+            if (file.exists()) {
+                println "JaCoCo merged report created: ${file.absolutePath}"
+            }
+        }
+    }
+}
+/**************************************************************************************
+ *  Merge Jacoco Report to one file
+ *************************************************************************************/
+gradle.projectsEvaluated {
+	def reportTask = tasks.named("jacocoRootReport").get()
+
+	reportTask.classDirectories.setFrom files(subprojects.collect { it.sourceSets.main.output })
+	reportTask.sourceDirectories.setFrom files(subprojects.collect { it.sourceSets.main.allSource.srcDirs })
+	reportTask.additionalSourceDirs.setFrom files(subprojects.collect { it.sourceSets.main.allSource.srcDirs })
+	// collect executionData from each Test task in each subproject
+       // collect execution data from each subproject's jacocoTestReport task
+    def executionFiles = subprojects.collect { proj ->
+        proj.tasks.withType(Test).findAll { it.enabled }.collect { testTask ->
+            // every Test task automatically creates executionData when jacoco plugin applied
+            def jacoco = proj.extensions.findByType(org.gradle.testing.jacoco.plugins.JacocoPluginExtension)
+            def execFile = testTask.extensions.findByType(org.gradle.testing.jacoco.plugins.JacocoTaskExtension)?.destinationFile
+            execFile
+        }
+    }.flatten().findAll { it != null }
+
+    reportTask.executionData.setFrom files(executionFiles)
+}
+
 gradle.taskGraph.whenReady { graph ->
 	def badTasks = [
 		'findMainClass',
@@ -256,6 +383,7 @@ gradle.taskGraph.whenReady { graph ->
 	graph.allTasks.findAll {it.name in badTasks}.each { task ->
 		task.enabled = false
 	}
+	
 }
 
 subprojects{
@@ -268,6 +396,9 @@ subprojects{
 		  if (project.configurations.findByName('testRuntimeOnly')) {
 			  println "[MAIN] After adding - testRuntimeOnly has ${project.configurations.testRuntimeOnly.dependencies.size()} dependencies"
 		}
+		  project.tasks.withType(Test).configureEach { testTask ->
+                finalizedBy(rootProject.tasks.jacocoRootReport) // <-- use direct task object
+            }
 	}
 
 	task copyToLib(type: Copy) {

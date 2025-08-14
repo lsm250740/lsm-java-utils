@@ -12,6 +12,7 @@ apache-log4j-version="2.+"
 #JUNIT
 junit4 = "4.12"
 junit5 = "5.10.1"
+jacoco = "0.8.10"
 
 
 [libraries]
@@ -25,6 +26,7 @@ apache-log4j-core={ module = "org.apache.logging.log4j:log4j-core", version.ref 
 apache-log4j-api={ module = "org.apache.logging.log4j:log4j-api", version.ref = "apache-log4j-version" }
 # log4j-slf4j-impl depends on 'org.slf4j:slf4j-api:2.0.13' and also loads apache-log4j-api
 apache-log4j-slf4j={ module = "org.apache.logging.log4j:log4j-slf4j-impl", version.ref = "apache-log4j-version" }
+
 
 
 #JUNIT
@@ -45,8 +47,5 @@ junit5 = ["junit5-api", "junit5-params"]
 junit5-RuntimeOnly = ["junit5-engine"]
 
 [plugins]
-java = { id = "java" }
-eclipse = { id = "eclipse" }
-groovy = { id = "groovy" }
-java-library = { id = "java-library" }
-maven-publish = { id = "maven-publish" }
+jacoco = { id = "jacoco", version.ref = "jacoco" }
+
