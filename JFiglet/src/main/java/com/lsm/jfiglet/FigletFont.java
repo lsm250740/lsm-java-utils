@@ -21,16 +21,16 @@ import java.io.*;
  *
  */
 public class FigletFont {
-  public char hardblank;
-  public int height = -1;
-  public int heightWithoutDescenders = -1;
-  public int maxLine = -1;
-  public int smushMode = -1;
-  public Integer printDirection = null;
-  public Integer fullLayout = null;
-  public Integer codetagCount = null;
-  public char font[][][] = null;
-  public String fontName = "";
+  char hardblank;
+  int height = -1;
+  int heightWithoutDescenders = -1;
+  int maxLine = -1;
+  int smushMode = -1;
+  Integer printDirection = null;
+  Integer fullLayout = null;
+  Integer codetagCount = null;
+  char font[][][] = null;
+  String fontName = "";
 
   SmushingRulesToApply smushingRulesToApply;
 

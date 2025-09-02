@@ -10,32 +10,54 @@ import java.util.Iterator;
 
 import static com.lsm.jfiglet.FigletFont.convertOneLine;
 
+/**
+ * Command-line interface for JFiglet ASCII art generation.
+ * Converts text messages into ASCII art using FIGlet fonts.
+ */
 public class JFiglet {
 
+    /**
+     * Main entry point for JFiglet command-line tool.
+     * 
+     * @param args Command line arguments:
+     *             -f FONT_FILE: Specifies font file (file system, classpath, or URL)
+     *             -o OUTPUT_FILE: Specifies output file (default: stdout)
+     *             MESSAGE: Text to convert to ASCII art (last argument)
+     * @throws IOException if font file cannot be read or output file cannot be written
+     */
     public static void main(String[] args) throws IOException {
+        // Initialize argument parsing variables
         final Iterator<String> arguments = Arrays.asList(args).iterator();
-        String font = null;
-        String text = null;
-        PrintStream out = System.out;
+        String font = null;  // Font file path
+        String text = null;  // Message to convert
+        PrintStream out = System.out;  // Output stream (default: stdout)
 
+        // Parse command line arguments
         while (arguments.hasNext()) {
             final String arg = arguments.next();
             if ("-f".equals(arg)) {
+                // Font file option
                 font = requireNextArgument(arguments, arg);
             } else if ("-o".equals(arg)) {
+                // Output file option
                 out = new PrintStream(new FileOutputStream(requireNextArgument(arguments, arg)));
             } else {
+                // Assume remaining argument is the message text
                 if (!arguments.hasNext()) {
                     text = arg;
                 }
                 break;
             }
         }
+        // Generate and output ASCII art
         if (text == null) {
+            // No message provided - show usage
             System.err.println(usage());
         } else if (font == null) {
+            // Use default font
             out.println(convertOneLine(text));
         } else {
+            // Use specified font
             out.println(convertOneLine(font, text));
         }
         out.close();
