@@ -2,6 +2,7 @@
 *.class
 *.project
 *.classpath
+*.prefs
 
 # Log file
 *.log
@@ -28,3 +29,4 @@ replay_pid*
 /build/
 /bin/
 /out/
+bin/
