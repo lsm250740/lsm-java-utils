@@ -36,7 +36,7 @@ file("build.properties").withInputStream { customProps.load(it) }
  *  TOML libs definitons utilities
  *  - getTomlCatalog - returns Toml catalog  VersionCatalogsExtension (@see settings.gradle)
  *  - getTomlLibVersion - returns value of the lib defined in TOML section  named [version]
- * -  tomlDependecies - adds dependecies to DependencyHandler 
+ * -  toml Dependecies - adds dependecies to DependencyHandler 
  *                          it should be sent to the method - variable name is delegate
  *  -  tomlDependecies - calls   tomlDependecies with parameter isTest = true                   
  *  - catalog - collection of TOML defined configuration
@@ -121,10 +121,13 @@ def tomlTestDependecies(source , String inLibName, boolean isTest = false) {
 
 		def deps = depProvider.get()
 		if (deps instanceof Collection) {
-			deps.each { singleDep ->
+			deps.each { singleDep -> {
+				println "[DEBUG] Adding $singleDep $libName as $config "
 				source.add(config, singleDep)
+			  }
 			}
 		} else {
+			println "[DEBUG] Adding  $libName as $config "
 			source.add(config, deps)
 		}
 	}
@@ -223,7 +226,21 @@ allprojects {
 	apply plugin: 'java-library'
 	apply plugin: 'maven-publish'
 	apply plugin: 'jacoco'
-	
+
+	// Gradle configuration to prevent downloading pre-release versions
+	configurations.all {
+		resolutionStrategy.componentSelection {
+			all { ComponentSelection selection ->
+				if (selection.candidate.version.contains('-rc') ||
+					selection.candidate.version.contains('-alpha') ||
+					selection.candidate.version.contains('-beta')) {
+					selection.reject('Rejecting pre-release version')
+				}
+			}
+		}
+	}
+
+		
 	repositories {
 		mavenCentral()
 		//	maven  {
@@ -236,7 +253,8 @@ allprojects {
 
 		flatDir { dirs 'lib' }
 	}
-
+	
+	 
 	jacoco {
 		toolVersion = libs.versions.jacoco.get()
 	}
@@ -368,6 +386,7 @@ allprojects {
 	dependencies {
 
 		implementation fileTree(dir: 'lib', include: '*.jar')
+		//testImplementation libs.bundles.mockito
 	    tomlAddTestDependencies(delegate  ,"junit${getTomlLibVersion('useJunit','4')}")
 		testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.1'
 		implementation libs.bundles.log4j

@@ -1,5 +1,7 @@
 # Compiled class file
 *.class
+*.project
+*.classpath
 
 # Log file
 *.log
@@ -25,3 +27,4 @@ replay_pid*
 /.gradle/
 /build/
 /bin/
+/out/

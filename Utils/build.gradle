@@ -14,9 +14,9 @@ ext {
 
 
 dependencies {
-	implementation fileTree(dir: 'lib', include: '*.jar')
-	
-
-	configurations.runtime.transitive = false
-
+//	implementation fileTree(dir: 'lib', include: '*.jar')
+//	configurations.runtime.transitive = false
+	implementation project(":Encryptor")
+	implementation libs.bundles.google.guava
+	implementation libs.bundles.jackson.databind
 }

@@ -9,10 +9,14 @@ apache-lang3-version="3.5"
 apache-collections4-version="4.+"
 apache-reflections-version="0.9.+"
 apache-log4j-version="2.+"
+# google-guava has version for android 33.+-android
+google-guava-version="33.3.1-jre"
+jackson-fasterxml-version="2.+"
 
 #JUNIT
 junit4 = "4.12"
 junit5 = "5.10.1"
+mockito = "5.8.0"
 jacoco = "0.8.10"
 
 
@@ -27,7 +31,8 @@ apache-log4j-core={ module = "org.apache.logging.log4j:log4j-core", version.ref 
 apache-log4j-api={ module = "org.apache.logging.log4j:log4j-api", version.ref = "apache-log4j-version" }
 # log4j-slf4j-impl depends on 'org.slf4j:slf4j-api:2.0.13' and also loads apache-log4j-api
 apache-log4j-slf4j={ module = "org.apache.logging.log4j:log4j-slf4j-impl", version.ref = "apache-log4j-version" }
-
+google-guava-api={module = "com.google.guava:guava", version.ref = "google-guava-version"}
+jackson-fasterxml-databind={module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson-fasterxml-version"}
 
 
 #JUNIT
@@ -35,17 +40,22 @@ junit4-core = { module = "junit:junit", version.ref = "junit4" }
 junit5-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit5" }
 junit5-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit5" }
 junit5-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit5" }
+junit-mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+junit5-mockito-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
 
  
 [bundles]
 #BASE
 log4j=["apache-log4j-core","apache-log4j-slf4j","apache-log4j-api"]
 apache-utils=["apache-beanutils","apache-io","apache-lang3","apache-collections4","apache-reflections"]
+google-guava=["google-guava-api"]
+jackson-databind=["jackson-fasterxml-databind"]
 
 #JUNIT
-junit4 = ["junit4-core"]
-junit5 = ["junit5-api", "junit5-params"]
+junit4 = ["junit4-core","junit-mockito-core"]
+junit5 = ["junit5-api", "junit5-params","junit-mockito-core","junit5-mockito-jupiter"]
 junit5-RuntimeOnly = ["junit5-engine"]
+#mockito = ["junit-mockito-core","junit5-mockito-jupiter"]
 
 [plugins]
 jacoco = { id = "jacoco", version.ref = "jacoco" }

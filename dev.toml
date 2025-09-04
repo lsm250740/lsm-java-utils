@@ -6,5 +6,5 @@ junit-platform = "1.10.0"
 junit5-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
 
 [bundles]
-junit5 = ["junit5-api", "junit5-engine", "junit5-params", "junit5-platform-launcher"]
-junit = ["junit5-api", "junit5-engine", "junit5-params", "junit5-platform-launcher"]
+#junit5 = ["junit5-api", "junit5-engine", "junit5-params", "junit5-platform-launcher"]
+#junit = ["junit5-api", "junit5-engine", "junit5-params", "junit5-platform-launcher"]
