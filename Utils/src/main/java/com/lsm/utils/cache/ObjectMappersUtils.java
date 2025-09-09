@@ -79,7 +79,7 @@ public enum ObjectMappersUtils {
 //				.configure(MapperFeature.IGNORE_DUPLICATE_MODULE_REGISTRATIONS, true)
 //				.configure(MapperFeature.USE_ANNOTATIONS, false)
 				.build();
-		mapper.setSerializationInclusion(Include.NON_NULL);
+		mapper.setDefaultPropertyInclusion(Include.NON_NULL);
 		SimpleModule simpleModule = new SimpleModule("Common Mapper");
 		simpleModule.addDeserializer(TimeUnit.class, new TimeUnitDeserializer());
 		mapper.registerModule(simpleModule);
