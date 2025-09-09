@@ -1,6 +1,7 @@
 include "JFiglet",
 		"Encryptor",
-		"Utils"
+		"Utils",
+		"JTest"
 		
 // 
 // Environment-based TOML merging for version catalogs

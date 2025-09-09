@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -68,6 +69,7 @@ public class PropsUtil{
 		logger.debug("loadDefaultProperties - START");
 		final Map<String,Object> refresh =  Collections.synchronizedMap(new TreeMap<>(String.CASE_INSENSITIVE_ORDER));
 		try{
+		
 			defaultProperties.load(StreamUtils.getResourceAsStream(DEFAULT_PROPERTIES_SOURCE));
 			logger.debug("loadDefaultProperties loaded");
 			environment = Environment.toEnum( defaultProperties.getProperty("environment"));
